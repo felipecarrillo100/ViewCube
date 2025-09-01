@@ -1,0 +1,37 @@
+.viewcube-container {
+    perspective: 1000px;
+    cursor: grab;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none; /* prevent default touch panning while interacting */
+}
+
+.viewcube-scene {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    /* transition is controlled dynamically from the component to turn on/off during drag */
+}
+
+.viewcube-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--face-text-color, #fff);
+    background: var(--face-bg, linear-gradient(to top, #0d0d0d, #494949));
+    border: 2px solid var(--face-border, #bdbdbd);
+    box-sizing: border-box;
+    user-select: none;
+    opacity: 0.95;
+    -webkit-user-drag: none;
+}
+
+.viewcube-face:hover {
+    background: var(--face-hover-bg, #333);
+    cursor: pointer;
+}

@@ -16,10 +16,18 @@ npm install viewcube-demo react react-dom
 Import your components from the library:
 ```typescript
 import React from "react";
-import { MyButton } from "viewcube-demo";
+import { ViewCube } from "viewcube";
 
 function App() {
-  return <MyButton label="Click me!" onClick={() => alert("Hello!")} />;
+    return (
+        <>
+            <ViewCube ref={cubeRef} size={250} transitionMs={500} />
+            <button onClick={() => cubeRef.current?.setRotation(45, 90)}>
+                Rotate Cube
+            </button>
+            <button onClick={() => cubeRef.current?.reset()}>Reset Cube</button>
+        </>
+    );
 }
 
 export default App;

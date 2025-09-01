@@ -22,6 +22,8 @@ export interface ViewCubeProps {
     transitionMs?: number;
     /** Callback fired whenever the rotation changes */
     onRotationChange?: (rotation: { x: number; y: number }) => void;
+    /** User-defined initial rotation (default: {x:-20, y:-30}) */
+    initialRotation?: { x: number; y: number };
 }
 
 const FACE_LABELS = ["Front", "Back", "Left", "Right", "Top", "Bottom"] as const;
@@ -46,9 +48,10 @@ function clampPitch(x: number) {
 }
 
 export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
-    ({ size = 200, transitionMs = 400, onRotationChange }, ref) => {
-        const [rotation, setRotation] = useState({ x: -20, y: -30 });
+    ({ size = 200, transitionMs = 400, onRotationChange, initialRotation = { x: -20, y: -30 } }, ref) => {
+        const [rotation, setRotation] = useState(initialRotation);
         const rotationRef = useRef(rotation);
+        const initialRotationRef = useRef(initialRotation); // keep stable initial
 
         useEffect(() => {
             rotationRef.current = rotation;
@@ -77,7 +80,8 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                 animateTo(finalY, targetPitch);
             },
             reset: () => {
-                animateTo(-30, -20);
+                const init = initialRotationRef.current;
+                animateTo(init.y, init.x);
             },
             getRotation: () => rotationRef.current,
         }));

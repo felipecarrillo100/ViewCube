@@ -18,6 +18,7 @@ export function App() {
                             size={64}
                             transitionMs={450}
                             onRotationChange={(rot) => setRotation(rot)}
+                            initialRotation={{x:0, y:0}}
                         />
                     </div>
                 </div>

@@ -24,6 +24,20 @@ export interface ViewCubeProps {
 
 const FACE_LABELS = ["Front", "Back", "Left", "Right", "Top", "Bottom"] as const;
 
+const cornerToRotation: Record<string, { x: number; y: number }> = {
+    // Top corners (x = pitch, y = yaw)
+    lft: { x: -45, y: 45 },  // left-front-top
+    frt: { x: -45, y: -45 }, // front-right-top
+    brt: { x: -45, y: -135 },// back-right-top
+    blt: { x: -45, y: 135 }, // back-left-top
+
+    // Bottom corners
+    lfm: { x: 45, y: 45 },   // left-front-bottom
+    frm: { x: 45, y: -45 },  // front-right-bottom
+    brm: { x: 45, y: -135 }, // back-right-bottom
+    blm: { x: 45, y: 135 },  // back-left-bottom
+};
+
 const FACE_TARGETS: Record<(typeof FACE_LABELS)[number], { x: number; y: number }> = {
     Front: { x: 0, y: -0 },
     Back: { x: 0, y: -180 },
@@ -254,6 +268,11 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onCornerClick?.(cornerClass);
+                                        // Rotate cube to show the three faces of this corner
+                                        const target = cornerToRotation[cornerClass];
+                                        if (target) {
+                                            animateTo(target.y, target.x); // animateTo(yaw, pitch)
+                                        }
                                     }}
                                     style={{
                                         width: `${size * 0.05}px`,

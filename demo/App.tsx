@@ -37,7 +37,7 @@ export function App() {
                     <div style={{ position: "absolute", left: 60 }}>
                         <ViewCube
                             ref={cubeRef1}
-                            size={64}
+                            size={128}
                             transitionMs={450}
                             onRotationChange={handleRotationChange}
                             initialRotation={{ x: 0, y: 25 }}
@@ -48,7 +48,7 @@ export function App() {
                     <div style={{ position: "absolute", right: 60 }}>
                         <ViewCube
                             ref={cubeRef2}
-                            size={64}
+                            size={128}
                             transitionMs={450}
                             onRotationChange={handleRotationChange}
                             initialRotation={{ x: 0, y: 25 }}

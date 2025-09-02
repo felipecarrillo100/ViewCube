@@ -24,10 +24,7 @@ export interface ViewCubeProps {
 
 const FACE_LABELS = ["Front", "Back", "Left", "Right", "Top", "Bottom"] as const;
 
-const FACE_TARGETS: Record<
-    (typeof FACE_LABELS)[number],
-    { x: number; y: number }
-> = {
+const FACE_TARGETS: Record<(typeof FACE_LABELS)[number], { x: number; y: number }> = {
     Front: { x: 0, y: -0 },
     Back: { x: 0, y: -180 },
     Left: { x: 0, y: 90 },
@@ -36,13 +33,17 @@ const FACE_TARGETS: Record<
     Bottom: { x: 90, y: 0 },
 };
 
-// Corners mapping: face -> 4 corner class names
+// CORNERS: each face lists 4 corner classes in this order:
+// index 0 = top-left, 1 = top-right, 2 = bottom-right, 3 = bottom-left
 const FACE_CORNERS: Record<(typeof FACE_LABELS)[number], string[]> = {
     Front: ["lft", "frt", "frm", "lfm"],
     Back: ["brt", "blt", "blm", "brm"],
     Left: ["blt", "lft", "lfm", "blm"],
     Right: ["frt", "brt", "brm", "frm"],
-    Top: ["lft", "frt", "brt", "blt"],
+    // ==== FIXED: Top face must be vertically inverted because of rotateX(90deg) ====
+    // original (visual) order when looking at top face as we draw it is inverted,
+    // so reverse the logical corner list so css top/bottom match the intended corners.
+    Top: ["blt", "brt", "frt", "lft"],
     Bottom: ["lfm", "frm", "brm", "blm"],
 };
 
@@ -211,12 +212,12 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
 
         const half = size / 2;
         const faceTransforms = [
-            `rotateY(0deg) translateZ(${half}px)`,
-            `rotateY(180deg) translateZ(${half}px)`,
-            `rotateY(-90deg) translateZ(${half}px)`,
-            `rotateY(90deg) translateZ(${half}px)`,
-            `rotateX(90deg) translateZ(${half}px)`,
-            `rotateX(-90deg) translateZ(${half}px)`,
+            `rotateY(0deg) translateZ(${half}px)`,   // Front
+            `rotateY(180deg) translateZ(${half}px)`, // Back
+            `rotateY(-90deg) translateZ(${half}px)`, // Left
+            `rotateY(90deg) translateZ(${half}px)`,  // Right
+            `rotateX(90deg) translateZ(${half}px)`,  // Top
+            `rotateX(-90deg) translateZ(${half}px)`, // Bottom
         ];
 
         const transitionStyle = isAnimating
@@ -225,7 +226,7 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
 
         return (
             <div
-                className={`viewcube-container ${hoveredCorner ? "hover-" + hoveredCorner : ""}`}
+                className={`viewcube-container`}
                 style={{ width: size, height: size }}
                 onMouseDown={handleContainerMouseDown}
                 onContextMenu={(e) => e.preventDefault()}
@@ -257,7 +258,7 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                                     style={{
                                         width: `${size * 0.05}px`,
                                         height: `${size * 0.05}px`,
-                                        ...cornerPositionStyle(j, size),
+                                        ...cornerPositionStyle(j),
                                     }}
                                 />
                             ))}
@@ -273,13 +274,12 @@ ViewCube.displayName = "ViewCube";
 export default ViewCube;
 
 /** Position corner squares inside face (0=tl,1=tr,2=br,3=bl) */
-function cornerPositionStyle(index: number, size: number): React.CSSProperties {
-    const offset = size * 0.05;
+function cornerPositionStyle(index: number): React.CSSProperties {
     switch (index) {
-        case 0: return { top: 0, left: 0, position: "absolute" };
-        case 1: return { top: 0, right: 0, position: "absolute" };
-        case 2: return { bottom: 0, right: 0, position: "absolute" };
-        case 3: return { bottom: 0, left: 0, position: "absolute" };
+        case 0: return { top: 0, left: 0, position: "absolute" };     // top-left
+        case 1: return { top: 0, right: 0, position: "absolute" };    // top-right
+        case 2: return { bottom: 0, right: 0, position: "absolute" }; // bottom-right
+        case 3: return { bottom: 0, left: 0, position: "absolute" };  // bottom-left
         default: return {};
     }
 }

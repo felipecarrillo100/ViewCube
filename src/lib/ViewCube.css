@@ -1,37 +1,46 @@
 .viewcube-container {
-    perspective: 1000px;
-    cursor: grab;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none; /* prevent default touch panning while interacting */
+    perspective: 800px;
+    user-select: none;
+    position: relative;
 }
 
 .viewcube-scene {
+    position: relative;
     width: 100%;
     height: 100%;
-    position: relative;
     transform-style: preserve-3d;
-    /* transition is controlled dynamically from the component to turn on/off during drag */
 }
 
 .viewcube-face {
     position: absolute;
     width: 100%;
     height: 100%;
+    background: rgba(200, 200, 200, 0.2);
+    border: 1px solid #999;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 14px;
     font-weight: bold;
-    color: var(--face-text-color, #fff);
-    background: var(--face-bg, linear-gradient(to top, #0d0d0d, #494949));
-    border: 2px solid var(--face-border, #bdbdbd);
+    color: #333;
     box-sizing: border-box;
-    user-select: none;
-    opacity: 0.95;
-    -webkit-user-drag: none;
 }
 
-.viewcube-face:hover {
-    background: var(--face-hover-bg, #333);
+/* Corner squares */
+.viewcube-corner {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #666;
+    position: absolute;
     cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    z-index: 2;
+}
+
+.viewcube-corner.hover {
+    background: yellow;
+}
+
+/* Optional hover grow effect */
+.viewcube-corner.hover {
+    transform: scale(1.2);
 }

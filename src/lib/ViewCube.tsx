@@ -9,26 +9,25 @@ import "./ViewCube.css";
 
 /** Public API available through ref */
 export interface ViewCubeHandle {
-    /** Smoothly rotate to (xDeg, yDeg) — x = pitch, y = yaw (degrees) */
     setRotation: (xDeg: number, yDeg: number) => void;
-    /** Reset to default pose */
     reset: () => void;
-    /** Get current rotation */
     getRotation: () => { x: number; y: number };
 }
 
 export interface ViewCubeProps {
     size?: number;
     transitionMs?: number;
-    /** Callback fired whenever the rotation changes */
     onRotationChange?: (rotation: { x: number; y: number }) => void;
-    /** User-defined initial rotation (default: {x:-20, y:-30}) */
+    onCornerClick?: (cornerClass: string) => void;
     initialRotation?: { x: number; y: number };
 }
 
 const FACE_LABELS = ["Front", "Back", "Left", "Right", "Top", "Bottom"] as const;
 
-const FACE_TARGETS: Record<typeof FACE_LABELS[number], { x: number; y: number }> = {
+const FACE_TARGETS: Record<
+    (typeof FACE_LABELS)[number],
+    { x: number; y: number }
+> = {
     Front: { x: 0, y: -0 },
     Back: { x: 0, y: -180 },
     Left: { x: 0, y: 90 },
@@ -37,21 +36,40 @@ const FACE_TARGETS: Record<typeof FACE_LABELS[number], { x: number; y: number }>
     Bottom: { x: 90, y: 0 },
 };
 
-const mod = (n: number, m: number) => ((n % m) + m) % m;
+// Corners mapping: face -> 4 corner class names
+const FACE_CORNERS: Record<(typeof FACE_LABELS)[number], string[]> = {
+    Front: ["lft", "frt", "frm", "lfm"],
+    Back: ["brt", "blt", "blm", "brm"],
+    Left: ["blt", "lft", "lfm", "blm"],
+    Right: ["frt", "brt", "brm", "frm"],
+    Top: ["lft", "frt", "brt", "blt"],
+    Bottom: ["lfm", "frm", "brm", "blm"],
+};
 
+const mod = (n: number, m: number) => ((n % m) + m) % m;
 function shortestSignedAngleDiff(current: number, target: number) {
     return mod(target - current + 180, 360) - 180;
 }
-
 function clampPitch(x: number) {
     return Math.max(-90, Math.min(90, x));
 }
 
 export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
-    ({ size = 200, transitionMs = 400, onRotationChange, initialRotation = { x: -20, y: -30 } }, ref) => {
+    (
+        {
+            size = 200,
+            transitionMs = 400,
+            onRotationChange,
+            onCornerClick,
+            initialRotation = { x: -20, y: -30 },
+        },
+        ref
+    ) => {
         const [rotation, setRotation] = useState(initialRotation);
         const rotationRef = useRef(rotation);
-        const initialRotationRef = useRef(initialRotation); // keep stable initial
+        const initialRotationRef = useRef(initialRotation);
+
+        const [hoveredCorner, setHoveredCorner] = useState<string | null>(null);
 
         useEffect(() => {
             rotationRef.current = rotation;
@@ -64,7 +82,6 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
         const [isAnimating, setIsAnimating] = useState(false);
         const cancelAnimationTimer = useRef<number | null>(null);
 
-        // centralized setter to emit rotation changes
         const setCubeRotation = (newRotation: { x: number; y: number }) => {
             rotationRef.current = newRotation;
             setRotation(newRotation);
@@ -107,7 +124,7 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
             }, transitionMs + 20);
         };
 
-        /** ---- Mouse handlers ---- */
+        /** ---- Mouse + Touch handlers ---- */
         const handleContainerMouseDown = (e: React.MouseEvent) => {
             dragButton.current = e.button;
             lastPos.current = { x: e.clientX, y: e.clientY };
@@ -135,7 +152,6 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
             dragButton.current = null;
         };
 
-        /** ---- Touch handlers ---- */
         const handleTouchStart: React.TouchEventHandler = (e) => {
             if (e.touches.length === 2) {
                 const x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
@@ -184,7 +200,7 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
             };
         }, []);
 
-        const handleFaceClick = (face: typeof FACE_LABELS[number]) => {
+        const handleFaceClick = (face: (typeof FACE_LABELS)[number]) => {
             const base = FACE_TARGETS[face];
             const cur = rotationRef.current;
             const dy = shortestSignedAngleDiff(cur.y, base.y);
@@ -209,7 +225,7 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
 
         return (
             <div
-                className="viewcube-container"
+                className={`viewcube-container ${hoveredCorner ? "hover-" + hoveredCorner : ""}`}
                 style={{ width: size, height: size }}
                 onMouseDown={handleContainerMouseDown}
                 onContextMenu={(e) => e.preventDefault()}
@@ -227,6 +243,24 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                             onClick={() => handleFaceClick(label)}
                         >
                             {label}
+                            {/* Render 4 corner squares for this face */}
+                            {FACE_CORNERS[label].map((cornerClass, j) => (
+                                <div
+                                    key={j}
+                                    className={`viewcube-corner ${cornerClass} ${hoveredCorner === cornerClass ? "hover" : ""}`}
+                                    onMouseEnter={() => setHoveredCorner(cornerClass)}
+                                    onMouseLeave={() => setHoveredCorner(null)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onCornerClick?.(cornerClass);
+                                    }}
+                                    style={{
+                                        width: `${size * 0.05}px`,
+                                        height: `${size * 0.05}px`,
+                                        ...cornerPositionStyle(j, size),
+                                    }}
+                                />
+                            ))}
                         </div>
                     ))}
                 </div>
@@ -237,3 +271,15 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
 
 ViewCube.displayName = "ViewCube";
 export default ViewCube;
+
+/** Position corner squares inside face (0=tl,1=tr,2=br,3=bl) */
+function cornerPositionStyle(index: number, size: number): React.CSSProperties {
+    const offset = size * 0.05;
+    switch (index) {
+        case 0: return { top: 0, left: 0, position: "absolute" };
+        case 1: return { top: 0, right: 0, position: "absolute" };
+        case 2: return { bottom: 0, right: 0, position: "absolute" };
+        case 3: return { bottom: 0, left: 0, position: "absolute" };
+        default: return {};
+    }
+}

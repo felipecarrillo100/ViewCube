@@ -93,9 +93,9 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
         const cancelAnimationTimer = useRef<number | null>(null);
 
         const setCubeRotation = (newRotation: { x: number; y: number }) => {
-            rotationRef.current = newRotation;
-            setRotation(newRotation);
-            onRotationChange?.(newRotation);
+            rotationRef.current = normalizeRotation(newRotation);
+            setRotation(rotationRef.current);
+            onRotationChange?.(rotationRef.current);
         };
 
         useImperativeHandle(ref, () => ({
@@ -296,4 +296,20 @@ function cornerPositionStyle(index: number): React.CSSProperties {
         case 3: return { bottom: 0, left: 0, position: "absolute" };
         default: return {};
     }
+}
+
+function normalizeRotation(newRotation: { x: number; y: number }) {
+    return {
+        x: clampPitch(newRotation.x),
+        y: normalizeY(newRotation.y),
+    };
+}
+
+// function normalizeY(y: number) {
+//     return ((y + 180) % 360 + 360) % 360 - 180;
+// }
+
+function normalizeY(y: number) {
+    // Wrap y to the range [-180, 180)
+    return (y % 720);
 }

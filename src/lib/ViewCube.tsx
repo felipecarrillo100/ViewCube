@@ -25,17 +25,16 @@ export interface ViewCubeProps {
 const FACE_LABELS = ["Front", "Back", "Left", "Right", "Top", "Bottom"] as const;
 
 const cornerToRotation: Record<string, { x: number; y: number }> = {
-    // Top corners (x = pitch, y = yaw)
-    lft: { x: -45, y: 45 },  // left-front-top
-    frt: { x: -45, y: -45 }, // front-right-top
-    brt: { x: -45, y: -135 },// back-right-top
-    blt: { x: -45, y: 135 }, // back-left-top
-
+    // Top corners
+    lft: { x: -45, y: 45 },   // left-front-top
+    frt: { x: -45, y: -45 },  // front-right-top
+    brt: { x: -45, y: -135 }, // back-right-top
+    blt: { x: -45, y: 135 },  // back-left-top
     // Bottom corners
-    lfm: { x: 45, y: 45 },   // left-front-bottom
-    frm: { x: 45, y: -45 },  // front-right-bottom
-    brm: { x: 45, y: -135 }, // back-right-bottom
-    blm: { x: 45, y: 135 },  // back-left-bottom
+    lfm: { x: 45, y: 45 },    // left-front-bottom
+    frm: { x: 45, y: -45 },   // front-right-bottom
+    brm: { x: 45, y: -135 },  // back-right-bottom
+    blm: { x: 45, y: 135 },   // back-left-bottom
 };
 
 const FACE_TARGETS: Record<(typeof FACE_LABELS)[number], { x: number; y: number }> = {
@@ -54,9 +53,6 @@ const FACE_CORNERS: Record<(typeof FACE_LABELS)[number], string[]> = {
     Back: ["brt", "blt", "blm", "brm"],
     Left: ["blt", "lft", "lfm", "blm"],
     Right: ["frt", "brt", "brm", "frm"],
-    // ==== FIXED: Top face must be vertically inverted because of rotateX(90deg) ====
-    // original (visual) order when looking at top face as we draw it is inverted,
-    // so reverse the logical corner list so css top/bottom match the intended corners.
     Top: ["blt", "brt", "frt", "lft"],
     Bottom: ["lfm", "frm", "brm", "blm"],
 };
@@ -83,7 +79,6 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
         const [rotation, setRotation] = useState(initialRotation);
         const rotationRef = useRef(rotation);
         const initialRotationRef = useRef(initialRotation);
-
         const [hoveredCorner, setHoveredCorner] = useState<string | null>(null);
 
         useEffect(() => {
@@ -258,7 +253,6 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                             onClick={() => handleFaceClick(label)}
                         >
                             {label}
-                            {/* Render 4 corner squares for this face */}
                             {FACE_CORNERS[label].map((cornerClass, j) => (
                                 <div
                                     key={j}
@@ -271,7 +265,9 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
                                         // Rotate cube to show the three faces of this corner
                                         const target = cornerToRotation[cornerClass];
                                         if (target) {
-                                            animateTo(target.y, target.x); // animateTo(yaw, pitch)
+                                            const pitch = clampPitch(target.x);
+                                            let yaw = ((target.y + 180) % 360) - 180;
+                                            animateTo(yaw, pitch);
                                         }
                                     }}
                                     style={{
@@ -292,13 +288,12 @@ export const ViewCube = forwardRef<ViewCubeHandle, ViewCubeProps>(
 ViewCube.displayName = "ViewCube";
 export default ViewCube;
 
-/** Position corner squares inside face (0=tl,1=tr,2=br,3=bl) */
 function cornerPositionStyle(index: number): React.CSSProperties {
     switch (index) {
-        case 0: return { top: 0, left: 0, position: "absolute" };     // top-left
-        case 1: return { top: 0, right: 0, position: "absolute" };    // top-right
-        case 2: return { bottom: 0, right: 0, position: "absolute" }; // bottom-right
-        case 3: return { bottom: 0, left: 0, position: "absolute" };  // bottom-left
+        case 0: return { top: 0, left: 0, position: "absolute" };
+        case 1: return { top: 0, right: 0, position: "absolute" };
+        case 2: return { bottom: 0, right: 0, position: "absolute" };
+        case 3: return { bottom: 0, left: 0, position: "absolute" };
         default: return {};
     }
 }
